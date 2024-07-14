@@ -1,1 +1,0 @@
-start chat_io.exe -s
