@@ -75,9 +75,7 @@ void _startComunication(Socket socket) async {
   await for (String line
       in stdin.transform(utf8.decoder).transform(LineSplitter())) {
     final message = line;
-    if (message == 'close') {
-      _exitApp();
-    }
+    _handleClose(message);
     if (message.isEmpty) return;
     final data = '${socket.address.address}:${socket.port}@$message';
     socket.add(utf8.encode(data));
@@ -91,7 +89,9 @@ int _getPort([bool invalid = true]) {
   } else {
     stdout.write('Enter server port number: ');
   }
-  final port = int.tryParse(stdin.readLineSync() ?? '');
+  final data = stdin.readLineSync() ?? '';
+  _handleClose(data);
+  final port = int.tryParse(data);
   if (port == null) return _getPort();
   if (port > 65535) return _getPort();
   return port;
@@ -107,6 +107,8 @@ String _getIpAddress([bool invalid = true]) {
   final regex = RegExp(
       r'^(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.'
       r'(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))\.(\d|[1-9]\d|1\d\d|2([0-4]\d|5[0-5]))$');
+
+  _handleClose(address);
   if (!regex.hasMatch(address)) {
     return _getIpAddress();
   }
@@ -150,4 +152,9 @@ void _handleAddToClients(Socket socket) {
 
 void _exitApp([int code = 0]) async {
   exit(code);
+}
+
+void _handleClose(String message) {
+  if (message != 'close') return;
+  _exitApp();
 }
