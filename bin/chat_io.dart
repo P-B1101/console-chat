@@ -155,6 +155,6 @@ void _exitApp([int code = 0]) async {
 }
 
 void _handleClose(String message) {
-  if (message != 'close') return;
-  _exitApp();
+  if (message != 'close') _exitApp();
+  if (message == '^C') _exitApp();
 }
