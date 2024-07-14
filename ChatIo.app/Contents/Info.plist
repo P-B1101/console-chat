@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleName</key>
-  <string>MyConsoleApp</string>
+  <string>ChatIo</string>
   <key>CFBundleExecutable</key>
-  <string>my_console_app</string>
+  <string>chat_io</string>
   <key>CFBundleIdentifier</key>
-  <string>com.example.myconsoleapp</string>
+  <string>com.b1101.chat</string>
   <key>CFBundleVersion</key>
   <string>1.0</string>
   <key>CFBundlePackageType</key>
