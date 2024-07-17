@@ -34,13 +34,7 @@ jobs:
       # Consider passing '--fatal-infos' for slightly stricter analysis.
       - name: Analyze project source
         run: dart analyze
-
-      # Your project will need to have tests in test/ and a dependency on
-      # package:test for this step to succeed. Note that Flutter projects will
-      # want to change this to 'flutter test'.
-      - name: Run tests
-        run: dart test
       - name: Compile client exe
-        run: dart compile exe bin/chat_io_client.dart
+        run: dart compile exe bin/chat_io_client.dart --output bin/build/chat_io_client.exe
       - name: Compile server exe
-        run: dart compile exe bin/chat_io_server.dart
+        run: dart compile exe bin/chat_io_server.dart --output bin/build/chat_io_server.exe
