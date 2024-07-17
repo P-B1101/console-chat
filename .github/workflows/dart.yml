@@ -35,6 +35,6 @@ jobs:
       - name: Analyze project source
         run: dart analyze
       - name: Compile client exe
-        run: dart compile exe bin/chat_io_client.dart --output bin/build/chat_io_client.exe
+        run: dart compile exe bin/chat_io_client.dart --output build/chat_io_client.exe
       - name: Compile server exe
-        run: dart compile exe bin/chat_io_server.dart --output bin/build/chat_io_server.exe
+        run: dart compile exe bin/chat_io_server.dart --output build/chat_io_server.exe
