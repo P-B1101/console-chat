@@ -5,21 +5,15 @@ import 'common.dart';
 class Client {
   late final String id;
   final Socket socket;
-  final Function(Socket socket, List<int> bytes) onSendMessageToAll;
-  final Function(Socket socket, List<int> bytes) onSendFileToAll;
-  Client(this.socket, this.onSendMessageToAll, this.onSendFileToAll) {
+  final Function(Socket socket, List<int> bytes) onTransferToAll;
+  // final Function(Socket socket, List<int> bytes) onSendFileToAll;
+  Client(this.socket, this.onTransferToAll) {
     id = '${socket.remoteAddress.address}:${socket.remotePort}';
-    socket.listen((event) => _serverListen(event));
+    socket.listen((event) => onTransferToAll(socket, event)).onDone(() {
+      print('Client $id disconnected');
+    });
     print(
         'Client connect ${socket.remoteAddress.address}:${socket.remotePort}');
-  }
-
-  void _serverListen(List<int> bytes) async {
-    try {
-      onSendMessageToAll(socket, bytes);
-    } catch (error) {
-      onSendFileToAll(socket, bytes);
-    }
   }
 
   bool isSame(Socket socket) => this.socket.isSame(socket);

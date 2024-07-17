@@ -64,6 +64,12 @@ class Common {
     if (port > 65535) return getPort();
     return port;
   }
+
+  static String fileName(String path) =>
+      path.substring(path.lastIndexOf(Platform.pathSeparator));
+
+  static String fileExtension(String path) =>
+      path.substring(path.lastIndexOf('.'));
 }
 
 extension SocketExt on Socket {
