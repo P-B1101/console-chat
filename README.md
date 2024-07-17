@@ -1,7 +1,5 @@
 A sample console application providing basic chat using tcp socket.
 
-Add `chat_io.exe` to PATH.
+run `bin/build/chat_io_client.exe` to run app as client.
 
-run `chat_io -s` to run app as server.
-
-run `chat_io` to run app as client.
+run `bin/build/chat_io_server.exe` to run app as server.

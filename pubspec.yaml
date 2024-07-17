@@ -1,12 +1,11 @@
 name: chat_io
-description: A sample command-line application with basic argument parsing.
-version: 0.0.1
-# repository: https://github.com/my_org/my_repo
+description: A sample command-line application for chat with tcp socket in local network.
+version: 0.0.2
+repository: https://github.com/P-B1101/console-chat
 
 environment:
   sdk: ^3.4.1
 
-# Add regular dependencies here.
 dependencies:
   args: ^2.4.2
   mime: ^1.0.5
