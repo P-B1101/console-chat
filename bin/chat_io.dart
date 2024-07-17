@@ -3,9 +3,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:args/args.dart';
+import 'package:mime/mime.dart';
 
 var _clients = <Socket>[];
-Socket? _client;
+var _clientBytes = <int>[];
 
 void main(List<String> arguments) {
   ProcessSignal.sigint.watch().listen((signal) {
@@ -27,25 +28,34 @@ Future<void> _startClientProcess() async {
   print('Client app started.');
   final ipAddress = _getIpAddress(false);
   final port = _getPort(false);
+  Socket? client;
   try {
     print('start connecting to $ipAddress with port $port...');
-    _client = await Socket.connect(ipAddress, port);
+    client = await Socket.connect(ipAddress, port);
+    print('Connect to $ipAddress:$port');
   } catch (error) {
+    client = null;
     print(error);
     _exitApp(69);
   }
-  print('Connect to $ipAddress:$port');
-  _client!.listen((event) => _listen(event, _client!));
-  _startComunication(_client!);
+  if (client == null) return;
+  client.listen((event) => _listen(event, client!));
+  _startComunication(client);
 }
 
 void _listen(List<int> bytes, Socket socket) {
   try {
     final message = utf8.decode(bytes);
+    if (message == 'EOF') {
+      _handleClientFile();
+      return;
+    }
     print(message);
   } catch (error) {
-    print('File transfer is not implemented yet');
-    _exitApp(69);
+    print('receive file packets...');
+    _clientBytes.addAll(bytes);
+    // print('File transfer is not implemented yet');
+    // _exitApp(69);
   }
 }
 
@@ -66,8 +76,16 @@ void _serverListen(List<int> bytes, Socket socket) async {
       await client.flush();
     }
   } catch (error) {
-    print('File transfer is not implemented yet');
-    _exitApp(69);
+    for (var client in _clients) {
+      if (client.remoteAddress.address == socket.remoteAddress.address &&
+          client.remotePort == socket.remotePort) {
+        continue;
+      }
+      client.add(bytes);
+      await client.flush();
+    }
+    // print('File transfer is not implemented yet');
+    // _exitApp(69);
   }
 }
 
@@ -76,6 +94,7 @@ void _startComunication(Socket socket) async {
       in stdin.transform(utf8.decoder).transform(LineSplitter())) {
     final message = line;
     _handleClose(message);
+    if (await (_handleFile(socket, message))) return;
     if (message.isEmpty) return;
     final data = '${socket.address.address}:${socket.port}@$message';
     socket.add(utf8.encode(data));
@@ -156,4 +175,38 @@ void _exitApp([int code = 0]) async {
 
 void _handleClose(String message) {
   if (message == 'close') _exitApp();
+}
+
+Future<bool> _handleFile(Socket socket, String message) async {
+  if (!message.startsWith('file://')) return false;
+  try {
+    final path = message.substring(7).toLowerCase();
+    final file = File(path);
+    if (!file.existsSync()) {
+      print('File $path does not exits');
+      return true;
+    }
+    print('start uploading file from $path.');
+    await socket.addStream(file.openRead());
+    // await socket.flush();
+    await Future.delayed(const Duration(seconds: 2));
+    socket.add(utf8.encode('EOF'));
+    print('file uploaded.');
+  } catch (error) {
+    print(error);
+  }
+  return true;
+}
+
+void _handleClientFile() {
+  final mime = lookupMimeType('', headerBytes: _clientBytes);
+  final extension = extensionFromMime(mime ?? '');
+  final path =
+      '${Directory.current.path}${Platform.pathSeparator}${DateTime.now().millisecondsSinceEpoch}.$extension';
+  final file = File(path);
+  if (file.existsSync()) file.deleteSync();
+  file.createSync();
+  file.writeAsBytesSync(_clientBytes.toList());
+  print('file downloaded at $path');
+  _clientBytes.clear();
 }
