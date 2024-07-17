@@ -7,6 +7,7 @@ import 'package:mime/mime.dart';
 
 var _clients = <Socket>[];
 var _clientBytes = <int>[];
+StreamSubscription<String>? _clientSub;
 
 void main(List<String> arguments) {
   ProcessSignal.sigint.watch().listen((signal) {
@@ -39,7 +40,13 @@ Future<void> _startClientProcess() async {
     _exitApp(69);
   }
   if (client == null) return;
-  client.listen((event) => _listen(event, client!));
+  client.listen((event) => _listen(event, client!)).onDone(() {
+    stdout.writeln();
+    print('disconnect from server.');
+    _clientSub?.cancel();
+    _clientSub = null;
+    _exitApp(70);
+  });
   _startComunication(client);
 }
 
@@ -54,8 +61,6 @@ void _listen(List<int> bytes, Socket socket) {
   } catch (error) {
     print('receive file packets...');
     _clientBytes.addAll(bytes);
-    // print('File transfer is not implemented yet');
-    // _exitApp(69);
   }
 }
 
@@ -76,6 +81,7 @@ void _serverListen(List<int> bytes, Socket socket) async {
       await client.flush();
     }
   } catch (error) {
+    print('receiving and transfering file packets ...');
     for (var client in _clients) {
       if (client.remoteAddress.address == socket.remoteAddress.address &&
           client.remotePort == socket.remotePort) {
@@ -84,22 +90,26 @@ void _serverListen(List<int> bytes, Socket socket) async {
       client.add(bytes);
       await client.flush();
     }
-    // print('File transfer is not implemented yet');
-    // _exitApp(69);
   }
 }
 
 void _startComunication(Socket socket) async {
-  await for (String line
-      in stdin.transform(utf8.decoder).transform(LineSplitter())) {
+  stdout.write('me: ');
+  _clientSub = stdin
+      .transform(utf8.decoder)
+      .transform(LineSplitter())
+      .listen((line) async {
+    stdout.write('me: ');
     final message = line;
     _handleClose(message);
-    if (await (_handleFile(socket, message))) return;
+    if (await (_handleFile(socket, message))) {
+      return;
+    }
     if (message.isEmpty) return;
     final data = '${socket.address.address}:${socket.port}@$message';
     socket.add(utf8.encode(data));
     await socket.flush();
-  }
+  });
 }
 
 int _getPort([bool invalid = true]) {
@@ -191,7 +201,8 @@ Future<bool> _handleFile(Socket socket, String message) async {
     // await socket.flush();
     await Future.delayed(const Duration(seconds: 2));
     socket.add(utf8.encode('EOF'));
-    print('file uploaded.');
+    stdout.writeln('me: file uploaded.');
+    stdout.write('me: ');
   } catch (error) {
     print(error);
   }
